@@ -5,7 +5,7 @@
  */
 
 import React, {Component} from "react";
-import DeleteIcon from "../icons/delete";
+import icons from "../icons";
 
 
 export default class LinkInput extends Component {
@@ -23,30 +23,48 @@ export default class LinkInput extends Component {
     if (!url.startsWith("http://") && !url.startsWith("https://")) {
       url = `http://${url}`;
     }
+
+    const expression = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&\/\/=]*)?/gi;
+    const regex = new RegExp(expression);
+
+    if (!url.match(regex)) {
+      this.props.setError(__("Invalid Link"));
+      return;
+    }
+
     this.props.setEntity({url});
+
+    this.reset();
+  }
+
+  reset() {
+    this.setState({
+      url: "",
+    });
+
+    this.props.cancelEntity();
   }
 
   onLinkChange(event) {
     event.stopPropagation();
-    this.setState({url: event.target.value});
+    const url = event.target.value;
+
+    if (url === "") {
+      this.props.cancelError();
+    }
+
+    this.setState({url: url});
   }
 
   onLinkKeyDown(event) {
     if (event.key == "Enter") {
       event.preventDefault();
       this.setLink();
-      this.setState({
-        url: ""
-      });
-      this.props.cancelEntity();
       // Force blur to work around Firefox's NS_ERROR_FAILURE
       event.target.blur();
     } else if (event.key == "Escape") {
       event.preventDefault();
-      this.setState({
-        url: ""
-      });
-      this.props.cancelEntity();
+      this.reset();
     }
   }
 
@@ -70,8 +88,12 @@ export default class LinkInput extends Component {
           <button
             onClick={this.props.removeEntity}
             type="button"
-            className="toolbar__button">
-            <DeleteIcon />
+            className="toolbar__button toolbar__input-button">
+            {
+              this.props.entity ?
+              <icons.UnlinkIcon/> :
+              <icons.CloseIcon />
+            }
           </button>
         </span>
       </div>
